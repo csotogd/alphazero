@@ -1,0 +1,8 @@
+{
+  "game": "pentomino", "iterations": 10, "games_per_iteration": 4,
+  "simulations": 64, "train_steps": 16, "batch_size": 32,
+  "replay_capacity": 5000, "channels": 32, "blocks": 2,
+  "learning_rate": 0.02, "momentum": 0.9, "l2": 0.0001,
+  "dirichlet_alpha": 0.03, "eval_games": 6, "eval_every": 2,
+  "seed": 7, "device": "cpu", "threads": 2
+}
