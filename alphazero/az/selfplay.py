@@ -36,5 +36,4 @@ def evaluate_random(game,evaluate,simulations,games,seed):
         if value is None:raise RuntimeError('Evaluation exceeded game horizon')
         value=value if game.current_player(state)==model_player else -value
         wins+=value>0;draws+=value==0;losses+=value<0
-    # Wilson interval for the decisive win rate; draws separately reported.
     return {'opponent':'uniform legal random','games':games,'wins':int(wins),'draws':int(draws),'losses':int(losses),'score_rate':(wins+.5*draws)/games,'seed':seed,'simulations':simulations,'note':'Small diagnostic sample; not evidence of strong play.'}

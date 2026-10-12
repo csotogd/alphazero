@@ -99,3 +99,25 @@ The independent inference entry point accepts the web game's JSON state and retu
 ```
 
 The state fields are `board` (144 entries, `null`/0/1), `remaining` (two arrays of piece names), `turn`, `passes` and `moves`. This is the same shape used by the web room API. The response contains the move (`piece`, `rotation`, `flipped`, `x`, `y`, or a pass), search value and training provenance. It does not silently replace MCTS with a greedy neural-policy lookup.
+
+## Overnight experiment (M4, 16 GB)
+
+`configs/overnight.json` defines a new, independently seeded run from random weights. The earlier 400-game checkpoint remains untouched. The run targets **10,000 self-play games** with the same 32-channel/two-block network, 64 simulations, batch 32 and two CPU threads. It stops and saves at a **12-hour cumulative runtime budget**; reaching the budget is a pause, not a claim of successful training.
+
+```sh
+.venv/bin/python -m az.train --config configs/overnight.json --run-dir runs/overnight-01
+```
+
+The local studio also accepts `POST /api/start` with JSON `{"preset":"overnight"}`. It prevents idle system sleep on macOS only while its training subprocess exists; it does not change power settings. Keep the Mac powered and the lid open. Pause/resume remains available through the studio. Extending a time-budget-exhausted run requires increasing `max_wall_seconds` in that run's config before resuming.
+
+Evaluation is separate from self-play and never changes policy targets or selects a model for training:
+
+- Before learning and every 1,000 self-play games: **200 games per opponent**, alternating colors, with checkpoint-dependent seeds.
+- Opponents: uniform random legal play; a deterministic scoring heuristic that preserves open corner frontiers (random tie-breaking); and the **frozen initial network with the same MCTS budget**.
+- The heuristic is solely an evaluation baseline. Its geometric features do not enter the learner or its search value function.
+- After training: **400 games per opponent** on a separate held-out seed range. If the time budget expires first, this final evaluation can be incomplete and no final strength claim should be made.
+- Score means `(wins + 0.5*draws)/games`. Conservative 95% Hoeffding intervals use the mean scores of color-swapped seed pairs as bounded observations; draws are not treated as wins. Repeated monitoring evaluations are not independent significance tests.
+
+Raw outcomes and seeds are written to `evaluations.jsonl`; compact summaries appear in the studio. `initial-model.pt` preserves the baseline; `models/iteration-*.pt` preserves evaluated model snapshots. Full resumable checkpoints are written every 100 completed self-play games, on graceful pause/failure, and at completion. An abrupt crash can lose progress since the last checkpoint; partially completed iterations repeat collection when resumed. This does not promise 10,000 unique retained games after interruptions.
+
+The run records the source Git commit and Torch version. The primary question is whether final held-out score against the frozen initial model exceeds 50% with its interval above 50%, alongside results against random and heuristic opponents. This is a predeclared comparison, not a promise of expert or superhuman play. Do not tune on the held-out results and continue calling them held out.

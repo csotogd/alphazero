@@ -8,7 +8,7 @@ from .train import ROOT,Config,atomic_json
 
 RUNS=ROOT/'runs';WEB=ROOT/'web'
 class Studio:
-    def __init__(self):self.process=None;self.run_name=None;self.lock=Lock();self.log=None
+    def __init__(self):self.process=None;self.run_name=None;self.lock=Lock();self.log=None;self.keep_awake=None
     def running(self):return self.process is not None and self.process.poll() is None
     def directory(self,name):
         if not name or not all(c.isalnum() or c in '-_' for c in name):raise ValueError('Invalid run name')
@@ -39,7 +39,10 @@ class Studio:
                 if status.get('status')=='complete':config.iterations+=int(body.get('iterations',10))
                 atomic_json(directory/'config.json',config.__dict__)
             else:
-                config=Config(game=body.get('game','pentomino'),iterations=int(body.get('iterations',10)),games_per_iteration=int(body.get('games_per_iteration',4)),simulations=int(body.get('simulations',64)))
+                if body.get('preset')=='overnight':
+                    config=Config(**json.loads((ROOT/'configs/overnight.json').read_text()))
+                else:
+                    config=Config(game=body.get('game','pentomino'),iterations=int(body.get('iterations',10)),games_per_iteration=int(body.get('games_per_iteration',4)),simulations=int(body.get('simulations',64)))
                 if config.game not in ('pentomino','tictactoe'):raise ValueError('Unknown game')
                 if not 1<=config.iterations<=2000 or not 1<=config.games_per_iteration<=64 or not 1<=config.simulations<=1600:raise ValueError('Settings outside supported local limits')
                 if config.game=='tictactoe':config.channels=32;config.blocks=2;config.dirichlet_alpha=.3
@@ -50,6 +53,9 @@ class Studio:
             if self.log:self.log.close()
             self.log=(directory/'train.log').open('a');self.process=subprocess.Popen(command,cwd=ROOT,stdout=self.log,stderr=subprocess.STDOUT,start_new_session=True)
             self.run_name=directory.name
+            if sys.platform=='darwin':
+                # Process-scoped assertion: no global power settings are changed.
+                self.keep_awake=subprocess.Popen(['/usr/bin/caffeinate','-i','-w',str(self.process.pid)])
             return {'run':directory.name,'pid':self.process.pid}
     def pause(self):
         with self.lock:
