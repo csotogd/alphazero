@@ -89,3 +89,13 @@ Adaptations and limits:
 Each run writes `config.json`, live `status.json`, `metrics.jsonl`, full self-play `games.jsonl`, `latest-game.json`, and atomic `checkpoint.pt`. Checkpoints include model, SGD state, replay, RNG and progress; generated files are ignored by Git and omitted from web deployment.
 
 Evaluation alternates colors against a uniform legal random player using a fixed seed and the same MCTS budget, first with the initial network and then periodically. The dashboard's percentage is `(wins + 0.5 × draws) / games`, not an Elo rating. The default six-game evaluation is a sanity check only. Falling training loss or a higher score in a tiny sample is not proof of improved strength. A serious claim requires many held-out evaluation games, confidence intervals and comparisons against earlier checkpoints and stronger baselines. No such strength claim is made here.
+
+### Use a checkpoint from another interface
+
+The independent inference entry point accepts the web game's JSON state and returns a legal move using the trained network and MCTS:
+
+```sh
+.venv/bin/python -m az.predict --checkpoint runs/YOUR_RUN/checkpoint.pt --state position.json --simulations 128
+```
+
+The state fields are `board` (144 entries, `null`/0/1), `remaining` (two arrays of piece names), `turn`, `passes` and `moves`. This is the same shape used by the web room API. The response contains the move (`piece`, `rotation`, `flipped`, `x`, `y`, or a pass), search value and training provenance. It does not silently replace MCTS with a greedy neural-policy lookup.

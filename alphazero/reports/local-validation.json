@@ -1,0 +1,230 @@
+{
+  "run": "pentomino-20261012-191337",
+  "game": "pentomino",
+  "status": "complete",
+  "config": {
+    "game": "pentomino",
+    "iterations": 10,
+    "games_per_iteration": 4,
+    "simulations": 64,
+    "train_steps": 16,
+    "batch_size": 32,
+    "replay_capacity": 5000,
+    "channels": 32,
+    "blocks": 2,
+    "learning_rate": 0.02,
+    "momentum": 0.9,
+    "l2": 0.0001,
+    "dirichlet_alpha": 0.03,
+    "eval_games": 6,
+    "eval_every": 2,
+    "seed": 7,
+    "device": "cpu",
+    "threads": 2,
+    "lr_drop_steps": [
+      10000,
+      30000,
+      50000
+    ]
+  },
+  "parameters": 4045736,
+  "device": "cpu",
+  "iteration": 10,
+  "games_played": 40,
+  "steps": 160,
+  "replay_positions": 714,
+  "elapsed_seconds": 140.16575980186462,
+  "history": [
+    {
+      "iteration": 1,
+      "games": 4,
+      "steps": 16,
+      "loss": 9.770710408687592,
+      "policy_loss": 8.79334932565689,
+      "value_loss": 0.4920427482575178,
+      "l2_loss": 0.48531814478337765,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 19.148625135421753
+    },
+    {
+      "iteration": 2,
+      "games": 8,
+      "steps": 32,
+      "loss": 8.818696081638336,
+      "policy_loss": 7.850143074989319,
+      "value_loss": 0.4808115065097809,
+      "l2_loss": 0.487741494551301,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 29.12702775001526
+    },
+    {
+      "iteration": 3,
+      "games": 12,
+      "steps": 48,
+      "loss": 8.275825172662735,
+      "policy_loss": 7.448459357023239,
+      "value_loss": 0.3381190998479724,
+      "l2_loss": 0.4892468247562647,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 46.57811975479126
+    },
+    {
+      "iteration": 4,
+      "games": 16,
+      "steps": 64,
+      "loss": 7.76691472530365,
+      "policy_loss": 6.944372594356537,
+      "value_loss": 0.33292311057448387,
+      "l2_loss": 0.4896190818399191,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 57.7444589138031
+    },
+    {
+      "iteration": 5,
+      "games": 20,
+      "steps": 80,
+      "loss": 7.727200776338577,
+      "policy_loss": 6.785439848899841,
+      "value_loss": 0.45195548608899117,
+      "l2_loss": 0.48980541341006756,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 73.29295086860657
+    },
+    {
+      "iteration": 6,
+      "games": 24,
+      "steps": 96,
+      "loss": 7.525019556283951,
+      "policy_loss": 6.554290264844894,
+      "value_loss": 0.48090424202382565,
+      "l2_loss": 0.48982513323426247,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 81.80861210823059
+    },
+    {
+      "iteration": 7,
+      "games": 28,
+      "steps": 112,
+      "loss": 6.893897891044617,
+      "policy_loss": 6.007603257894516,
+      "value_loss": 0.39651614986360073,
+      "l2_loss": 0.48977844789624214,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 98.20530200004578
+    },
+    {
+      "iteration": 8,
+      "games": 32,
+      "steps": 128,
+      "loss": 7.216283321380615,
+      "policy_loss": 6.250502228736877,
+      "value_loss": 0.4762518107891083,
+      "l2_loss": 0.48952930234372616,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 108.72252583503723
+    },
+    {
+      "iteration": 9,
+      "games": 36,
+      "steps": 144,
+      "loss": 7.147687882184982,
+      "policy_loss": 6.188340276479721,
+      "value_loss": 0.470002256333828,
+      "l2_loss": 0.4893454760313034,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 124.86640405654907
+    },
+    {
+      "iteration": 10,
+      "games": 40,
+      "steps": 160,
+      "loss": 7.087777107954025,
+      "policy_loss": 6.180631130933762,
+      "value_loss": 0.41804024297744036,
+      "l2_loss": 0.48910568840801716,
+      "learning_rate": 0.02,
+      "elapsed_seconds": 133.3375449180603
+    }
+  ],
+  "evaluations": [
+    {
+      "iteration": 0,
+      "opponent": "uniform legal random",
+      "games": 6,
+      "wins": 3,
+      "draws": 2,
+      "losses": 1,
+      "score_rate": 0.6666666666666666,
+      "seed": 1007,
+      "simulations": 64,
+      "note": "Small diagnostic sample; not evidence of strong play."
+    },
+    {
+      "iteration": 2,
+      "opponent": "uniform legal random",
+      "games": 6,
+      "wins": 2,
+      "draws": 1,
+      "losses": 3,
+      "score_rate": 0.4166666666666667,
+      "seed": 1007,
+      "simulations": 64,
+      "note": "Small diagnostic sample; not evidence of strong play."
+    },
+    {
+      "iteration": 4,
+      "opponent": "uniform legal random",
+      "games": 6,
+      "wins": 4,
+      "draws": 1,
+      "losses": 1,
+      "score_rate": 0.75,
+      "seed": 1007,
+      "simulations": 64,
+      "note": "Small diagnostic sample; not evidence of strong play."
+    },
+    {
+      "iteration": 6,
+      "opponent": "uniform legal random",
+      "games": 6,
+      "wins": 1,
+      "draws": 1,
+      "losses": 4,
+      "score_rate": 0.25,
+      "seed": 1007,
+      "simulations": 64,
+      "note": "Small diagnostic sample; not evidence of strong play."
+    },
+    {
+      "iteration": 8,
+      "opponent": "uniform legal random",
+      "games": 6,
+      "wins": 2,
+      "draws": 1,
+      "losses": 3,
+      "score_rate": 0.4166666666666667,
+      "seed": 1007,
+      "simulations": 64,
+      "note": "Small diagnostic sample; not evidence of strong play."
+    },
+    {
+      "iteration": 10,
+      "opponent": "uniform legal random",
+      "games": 6,
+      "wins": 2,
+      "draws": 2,
+      "losses": 2,
+      "score_rate": 0.5,
+      "seed": 1007,
+      "simulations": 64,
+      "note": "Small diagnostic sample; not evidence of strong play."
+    }
+  ],
+  "verification": {
+    "typescript_rule_tests": 4,
+    "python_tests": 9,
+    "room_integration": "passed: join/auth/turn/invalid/concurrent/full game/mutual rematch",
+    "cross_language": "complete legal-action sets matched over 3 full games"
+  },
+  "interpretation": "Completed a functional local validation run. No statistically supported playing-strength improvement is claimed."
+}

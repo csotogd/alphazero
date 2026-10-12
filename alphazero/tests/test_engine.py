@@ -80,3 +80,11 @@ def test_training_updates_weights_and_checkpoint_resumes(tmp_path):
     assert saved['steps']==2 and len(saved['replay'])>0
     config.iterations=2;status=run(config,tmp_path,resume=True)
     assert status['steps']==4 and status['iteration']==2 and status['games_played']==2
+
+def test_browser_bridge_roundtrip_and_action_codec():
+    game=Pentomino();s=game.initial_state();rng=np.random.default_rng(8)
+    for _ in range(15):
+        assert game.from_web(game.serialize(s))==s
+        if game.terminal_value(s) is not None:break
+        for a in game.legal_actions(s):assert game.encode_action(game.decode_action(int(a)))==a
+        s=game.next_state(s,int(rng.choice(game.legal_actions(s))))
