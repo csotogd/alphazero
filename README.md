@@ -5,6 +5,21 @@ Two separate applications in one workspace:
 - **Pentomino web game:** React + TypeScript, authoritative room API, persistent Cloudflare D1 rooms. Local two-player mode works without a server database.
 - **`alphazero/`:** independent Python package, a reusable game adapter interface, PyTorch policy/value network, PUCT search, self-play training and a local monitoring dashboard.
 
+![Measured AlphaZero results: overall wins rise from 72.5% to 85.5% with more search; at 1,000 simulations the model wins 99 of 100 games moving first and 72 of 100 moving second.](docs/assets/search-budget.png)
+
+**Measured, not simulated for illustration.** The same trained network played 200
+games against a uniform legal random opponent at each search budget, with paired
+seeds and alternating colors. The gain from 256 to 1,000 simulations was only three
+percentage points and remains uncertain (exploratory 99% paired interval: −6.5 to
++12.5 points). These results measure search strength, not a training learning curve.
+See the [full experiment report](alphazero/reports/diagnosis-20261013.html) and
+[machine-readable evidence](alphazero/reports/diagnosis-20261013.json).
+
+The next experiment focuses learning on the **second player's positions**, with
+1,000 simulations during self-play. Its configuration and commands are documented
+[here](alphazero/README.md#second-player-focused-continuation); no improvement from
+that continuation is claimed before evaluation.
+
 ## Play locally
 
 ```sh

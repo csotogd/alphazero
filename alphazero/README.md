@@ -28,7 +28,44 @@ CLI alternative:
 
 Use Ctrl+C to pause and save. Do not launch CLI training into a directory already in use by the studio. Resume restores network, optimizer, replay memory, NumPy RNG and CPU Torch RNG. Increase `iterations` in the original config to extend a completed run; incompatible training settings are rejected. On interruption, completed games are retained; an unfinished self-play game is discarded and the partial iteration's game collection restarts. CPU reproducibility is tested; results across devices/library versions need not be bitwise identical.
 
-## Common interface
+## Second-player-focused continuation
+
+The default learner trains on both players. `training_player: 1` is an explicit
+experimental adaptation: both seats still use the latest network and noisy MCTS
+in self-play, but **only positions with player 1 to move enter replay**. Rewards
+remain the terminal win/draw/loss from that player's perspective. This does not
+move the second player first, train against random play, or reproduce the paper's
+balanced data distribution. Specialization can reduce first-player strength.
+
+```sh
+.venv/bin/python -m az.train --config configs/second-player.json \
+  --initialize-from runs/YOUR_ORIGINAL_RUN/checkpoint.pt \
+  --run-dir runs/second-player
+# Resume this continuation, not the source run:
+.venv/bin/python -m az.train --config configs/second-player.json \
+  --run-dir runs/second-player --resume
+```
+
+The supplied config collects 320 games (40 iterations × 8), with 1,000 simulations
+per move, 1,280 SGD updates, learning rate 0.002, and a two-hour elapsed-time cap.
+Every iteration saves a resumable checkpoint. `--initialize-from` imports **only
+weights**; optimizer, replay, RNG and counters start fresh. The source file stays
+unchanged, and its hash and training counts are recorded in `initialization.json`.
+Resume restores this continuation's complete state and rejects a change of seat.
+To extend a time-limited run, increase its elapsed-time cap before resuming.
+
+Evaluation records `by_player` win/draw/loss counts for both seats. Monitoring uses
+40 games on fixed seeds before learning and every 10 iterations. These repeated
+monitoring games are not held-out evidence. The final test compares the learner
+and the frozen source on the same 200 fresh games at the same search budget, with
+100 games per seat; the time cap can pause the run before final evaluation.
+Generated models and live logs remain local and are excluded from Git.
+
+The README image can be regenerated with `python scripts/plot_diagnosis.py` from
+this directory, using an environment with the optional `matplotlib` package.
+It reads the committed diagnostic JSON; it does not run training or invent data.
+
+## Game adapter interface
 
 `az/game.py` defines the `Game[State]` protocol:
 
@@ -121,3 +158,85 @@ Evaluation is separate from self-play and never changes policy targets or select
 Raw outcomes and seeds are written to `evaluations.jsonl`; compact summaries appear in the studio. `initial-model.pt` preserves the baseline; `models/iteration-*.pt` preserves evaluated model snapshots. Full resumable checkpoints are written every 100 completed self-play games, on graceful pause/failure, and at completion. An abrupt crash can lose progress since the last checkpoint; partially completed iterations repeat collection when resumed. This does not promise 10,000 unique retained games after interruptions.
 
 The run records the source Git commit and Torch version. The primary question is whether final held-out score against the frozen initial model exceeds 50% with its interval above 50%, alongside results against random and heuristic opponents. This is a predeclared comparison, not a promise of expert or superhuman play. Do not tune on the held-out results and continue calling them held out.
+
+## Controlled diagnostic study
+
+`az.diagnose` tests seven families of explanations for a plateau using copies of an
+existing Pentomino checkpoint. It does not modify the source checkpoint, the
+production training defaults, or the browser game. The study is finite and can
+take tens of minutes on a laptop; it uses two CPU threads.
+
+```sh
+.venv/bin/python -m az.diagnose --source runs/YOUR_RUN --output runs/diagnosis
+.venv/bin/python -m az.endgame_audit --source runs/YOUR_RUN --output runs/diagnosis/endgames.json
+.venv/bin/python -m az.diagnosis_report --study runs/diagnosis --output reports/diagnosis.html
+```
+
+The source must have the overnight run's full checkpoint, game log and snapshots
+at iterations 100, 300 and 500. The harness writes its protocol before testing.
+Default screening uses 80 color-alternated games per arm with shared seeds:
+
+- Frozen-model comparisons: greedy policy, 16/64/256 MCTS simulations, increased
+  PUCT exploration, zero neural value, uniform policy prior, reflected input,
+  reflection ensemble, earlier checkpoints, and two reference opponents.
+- Five continuation arms, each with two training seeds and 80 new self-play games:
+  current learning rate 0.002, 0.0002, 0.02, historical value rehearsal, and more
+  diffuse Dirichlet noise. Each starts with the same model, optimizer momentum
+  and replay; training uses 320 gradient steps per arm.
+- The best non-control continuation by mean screening score across both seeds is
+  compared with its controls on 200 new games per seed. Both training seeds are
+  retained. The original model with 64 versus 256 simulations is independently
+  compared on that same new seed range.
+- A bounded exact endgame solver checks whether selected small positions contain
+  avoidable decision errors. It refuses to return an exact answer after a node
+  cutoff and does not supply training labels or gameplay hints to the learner.
+
+Results include raw game outcomes, points, color splits, timings, model copies,
+and exploratory 99% paired seed-cluster bootstrap intervals. The intervals are
+not simultaneous multiple-comparison guarantees. Short continuations with two
+training seeds cannot establish a globally optimal learning rate or exclude
+long-run architecture/data limitations.
+
+Only the current replay stores historical MCTS distributions. Older game logs
+store moves and outcomes, so the rehearsal arm uses **value labels only**, never
+fabricated policy targets. It also changes batch composition/BatchNorm updates;
+it is not a pure replay-capacity ablation. Reflection ensembling doubles network
+evaluations per search leaf and is not a fixed-time comparison. Game outcomes
+against random play are not exact minimax labels for the value network.
+
+Completed match arms and complete continuation models are reused on rerun after
+protocol validation. An interrupted continuation restarts from the source model;
+there is no mid-arm resume. Keep the original source checkpoint unchanged during
+a study. `--phase` runs an individual stage after its prerequisites exist.
+
+The October diagnostic study also records explicitly labelled adaptive follow-ups.
+They use new confirmation seeds and leave the initial protocol identifiable:
+
+```sh
+.venv/bin/python -m az.prior_diagnosis --source runs/YOUR_RUN --output runs/diagnosis/prior-followup
+.venv/bin/python -m az.diagnose_followups --source runs/YOUR_RUN --output runs/diagnosis --phase symmetry
+.venv/bin/python -m az.diagnose_followups --source runs/YOUR_RUN --output runs/diagnosis --phase capacity
+.venv/bin/python -m az.diagnose_followups --source runs/YOUR_RUN --output runs/diagnosis --phase capacity-confirmation
+.venv/bin/python -m az.diagnose_followups --source runs/YOUR_RUN --output runs/diagnosis --phase entropy
+.venv/bin/python -m az.diagnose_followups --source runs/YOUR_RUN --output runs/diagnosis --phase export
+.venv/bin/python -m az.diagnose_followups --source runs/YOUR_RUN --output runs/diagnosis --phase search1000
+```
+
+The capacity arm isolates replay eviction by retaining the original 5,000 examples
+while collecting 80 further games, reaching about 6,500 positions under a 20,000
+cap. It does not test a full 20,000-position buffer. Its confirmation runs only if
+both screening seeds improve win counts and their mean score gain is at least
+0.025. The source run must remain unchanged across all phases. Regenerate the
+HTML report after all requested follow-ups finish; it includes their results and
+distinguishes exploratory from confirmation comparisons.
+
+The export phase packages both selected training seeds for `az.predict`, including
+cumulative training counters and architecture metadata. These files are inference
+snapshots, not resumable training checkpoints; the original full checkpoint is
+preserved.
+
+The user-requested `search1000` phase evaluates the unchanged original model for
+200 games with 1,000 simulations, paired against the existing 64/256 confirmation
+arms. It records move timings and paired differences. Because it was requested
+after observing the earlier results and reuses their seeds, this is an adaptive
+follow-up, not a fresh independent confirmation. It performs no training.

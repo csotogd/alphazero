@@ -2,11 +2,15 @@ from .mcts import search,choose_action
 from .replay import Sample
 
 def self_play(game,evaluate,config,rng,progress=None):
+    training_player=config.get('training_player')
+    if training_player not in (None,0,1):raise ValueError('training_player must be null, 0 or 1')
     state=game.initial_state();pending=[];trajectory=[]
     for ply in range(game.max_moves):
         if game.terminal_value(state) is not None:break
         result=search(game,state,evaluate,config['simulations'],rng,noise=True,dirichlet_alpha=config['dirichlet_alpha'])
-        pending.append((game.encode(state),result.actions,result.probabilities.astype('float32'),game.current_player(state)))
+        player=game.current_player(state)
+        if training_player is None or player==training_player:
+            pending.append((game.encode(state),result.actions,result.probabilities.astype('float32'),player))
         # AlphaZero's paper samples proportional to visits in training. No greedy
         # early cutoff, symmetry augmentation, or AlphaGo Zero promotion gate.
         action=choose_action(result,rng,temperature=1.)
@@ -18,7 +22,8 @@ def self_play(game,evaluate,config,rng,progress=None):
     terminal_player=game.current_player(state)
     samples=[Sample(obs,actions,policy,value if player==terminal_player else -value) for obs,actions,policy,player in pending]
     outcome0=value if terminal_player==0 else -value
-    return samples,{'moves':len(trajectory),'outcome_player0':outcome0,'final':game.serialize(state),'trajectory':trajectory}
+    return samples,{'moves':len(trajectory),'outcome_player0':outcome0,'final':game.serialize(state),'trajectory':trajectory,
+                    'training_player':training_player,'training_positions':len(samples)}
 
 def evaluate_random(game,evaluate,simulations,games,seed):
     import numpy as np

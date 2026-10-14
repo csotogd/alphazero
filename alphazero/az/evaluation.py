@@ -88,7 +88,14 @@ def evaluate_match(game, candidate, opponent, games, seed, progress=None):
         outcomes.append(float(outcome))
         if progress:
             progress(index+1, games, game.serialize(state))
-    return {**summarize(outcomes, seed+2_000_000), 'seed':seed, 'outcomes':outcomes}
+    by_player={}
+    for player in (0,1):
+        values=outcomes[player::2];counts=Counter(values);n=len(values)
+        by_player[str(player)]={'games':n,'wins':counts[1.],'draws':counts[0.],
+            'losses':counts[-1.],'win_rate':counts[1.]/n,
+            'score_rate':(counts[1.]+.5*counts[0.])/n}
+    return {**summarize(outcomes, seed+2_000_000), 'seed':seed, 'outcomes':outcomes,
+            'by_player':by_player}
 
 
 def evaluate_suite(game, evaluator, initial_evaluator, simulations, games, seed,
